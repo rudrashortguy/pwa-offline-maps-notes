@@ -1,80 +1,100 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<'app' | 'about'>('app');
-  const [count, setCount] = useState(0);
+export function App() {
+  const storageKey = 'pwa_01_offline_maps_notes_items';
+  const [items, setItems] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : ['$DEFAULT_ITEM', 'Tap below to add new records', 'Fully works offline!'];
+    } catch {
+      return ['$DEFAULT_ITEM'];
+    }
+  });
+  const [input, setInput] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
+
+  const addItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setItems([input.trim(), ...items]);
+    setInput('');
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-3">
-          <span className="text-3xl">🗺️</span>
-          <div>
-            <h1 className="font-bold text-lg text-slate-900">GeoNotes</h1>
-            <p className="text-xs text-slate-500">Portfolio PWA (Vite + TS + Workbox)</p>
-          </div>
+    <div className="container">
+      <header>
+        <div>
+          <h1>$APP_NAME</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            $DESCRIPTION
+          </p>
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setActiveTab('app')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'app' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'about' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-          >
-            PWA Info
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <span className="badge">Portfolio PWA</span>
+          <span style={{ fontSize: '0.75rem', color: isOnline ? '#4ade80' : '#f87171' }}>
+            ● {isOnline ? 'Online' : 'Offline Mode'}
+          </span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6">
-        {activeTab === 'app' ? (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-              <div className="text-6xl mb-4">🗺️</div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">GeoNotes - Offline Maps & Field Notes</h2>
-              <p className="text-slate-600 mb-6 max-w-lg mx-auto text-sm">A progressive web app for dropping geo-tagged notes, offline maps via tile caching, and spatial sync.</p>
+      <div className="card">
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Interactive Workspace</h3>
+        <form onSubmit={addItem}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Add new entry..."
+          />
+          <button type="submit" style={{ width: '100%' }}>Add Item</button>
+        </form>
+      </div>
 
-              <div className="flex justify-center space-x-4 mb-8">
-                <button
-                  onClick={() => setCount(c => c + 1)}
-                  className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg transition-transform active:scale-95"
-                  style={{ backgroundColor: '#10B981' }}
-                >
-                  Interactive Action (Count: {count})
-                </button>
-              </div>
-
-              <div className="max-w-md mx-auto space-y-2 text-left bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Key Capabilities</h3>
-                <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Offline map tile caching</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Geo-tagged markdown notes</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Spatial search & radius filtering</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Export GeoJSON & GPX</div>
-              </div>
-            </div>
-          </div>
+      <div className="card" style={{ flex: 1 }}>
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Stored Entries ({items.length})</h3>
+        {items.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>No items yet. Add one above!</p>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Progressive Web App (PWA) Architecture</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              This application is built with Vite, TypeScript, Tailwind CSS, and Workbox (via vite-plugin-pwa). It is fully optimized for mobile and desktop browsers, featuring offline support, manifest installation, and auto-update service worker lifecycle.
-            </p>
-            <div className="bg-slate-50 p-4 rounded-xl font-mono text-xs text-slate-700 space-y-1">
-              <div>📦 Stack: Vite + React + TypeScript + Tailwind</div>
-              <div>⚡ Service Worker: Workbox (Auto-update enabled)</div>
-              <div>🚀 Repository: github.com/rudra/pwa-offline-maps-notes</div>
-            </div>
-          </div>
+          <ul>
+            {items.map((item, idx) => (
+              <li key={idx}>
+                <span>{item}</span>
+                <button
+                  onClick={() => removeItem(idx)}
+                  style={{ background: 'transparent', color: '#f87171', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
-      </main>
+      </div>
 
-      <footer className="bg-white border-t border-slate-200 px-6 py-4 text-center text-xs text-slate-400">
-        Portfolio PWA 2026 • Built with automated pipeline
+      <footer>
+        <p>$APP_NAME • Built with Vite, TypeScript & Workbox PWA</p>
       </footer>
     </div>
   );
 }
+
+export default App;

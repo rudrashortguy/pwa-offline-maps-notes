@@ -9,11 +9,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'GeoNotes - Offline Maps & Field Notes',
-        short_name: 'GeoNotes',
-        description: 'A progressive web app for dropping geo-tagged notes, offline maps via tile caching, and spatial sync.',
-        theme_color: '#10B981',
-        background_color: '#ffffff',
+        name: '$APP_TITLE PWA',
+        short_name: '$APP_TITLE',
+        description: '$DESCRIPTION',
+        theme_color: '#4f46e5',
+        background_color: '#020617',
         display: 'standalone',
         icons: [
           {
