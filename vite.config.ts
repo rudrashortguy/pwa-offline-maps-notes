@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
@@ -9,11 +9,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'GeoNotes - Offline Maps & Field Notes',
-        short_name: 'GeoNotes',
-        description: 'A progressive web app for dropping geo-tagged notes, offline maps via tile caching, and spatial sync.',
-        theme_color: '#10B981',
-        background_color: '#ffffff',
+        name: '$APP_TITLE PWA',
+        short_name: '$APP_TITLE',
+        description: '$DESCRIPTION',
+        theme_color: '$THEME_COLOR',
+        background_color: '#0f172a',
         display: 'standalone',
         icons: [
           {
@@ -27,7 +27,21 @@ export default defineConfig({
             type: 'image/png'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        navigateFallback: '/',
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.github\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'github-api-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          }
+        ]
       }
     })
   ]
-});
+})

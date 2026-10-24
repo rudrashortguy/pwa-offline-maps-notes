@@ -1,80 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Wifi, WifiOff } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'app' | 'about'>('app');
-  const [count, setCount] = useState(0);
+  const [items, setItems] = useState<string[]>(['Welcome to GeoNotes', 'Add your first item below', 'Works offline!']);
+  const [input, setInput] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pwa_01-offline-maps-notes_items');
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved));
+      } catch {}
+    }
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('pwa_01-offline-maps-notes_items', JSON.stringify(items));
+  }, [items]);
+
+  const addItem = () => {
+    if (input.trim()) {
+      setItems([...items, input.trim()]);
+      setInput('');
+    }
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-3">
-          <span className="text-3xl">🗺️</span>
-          <div>
-            <h1 className="font-bold text-lg text-slate-900">GeoNotes</h1>
-            <p className="text-xs text-slate-500">Portfolio PWA (Vite + TS + Workbox)</p>
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center p-6">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">GeoNotes</h1>
+          <div className="flex items-center gap-1 text-sm">
+            {isOnline ? <Wifi size=16 className="text-green-500" /> : <WifiOff size=16 className="text-red-500" />}
+            <span className="text-slate-400">{isOnline ? 'Online' : 'Offline'}</span>
           </div>
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setActiveTab('app')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'app' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'about' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-          >
-            PWA Info
-          </button>
+
+        <div className="bg-slate-900 rounded-2xl p-4 mb-4">
+          <div className="flex gap-2">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addItem()}
+              placeholder="Add new item..."
+              className="flex-1 bg-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-10B981"
+            />
+            <button onClick={addItem} className="bg-10B981 hover:opacity-80 p-3 rounded-xl transition">
+              <Plus />
+            </button>
+          </div>
         </div>
-      </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6">
-        {activeTab === 'app' ? (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-              <div className="text-6xl mb-4">🗺️</div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">GeoNotes - Offline Maps & Field Notes</h2>
-              <p className="text-slate-600 mb-6 max-w-lg mx-auto text-sm">A progressive web app for dropping geo-tagged notes, offline maps via tile caching, and spatial sync.</p>
-
-              <div className="flex justify-center space-x-4 mb-8">
-                <button
-                  onClick={() => setCount(c => c + 1)}
-                  className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg transition-transform active:scale-95"
-                  style={{ backgroundColor: '#10B981' }}
-                >
-                  Interactive Action (Count: {count})
-                </button>
-              </div>
-
-              <div className="max-w-md mx-auto space-y-2 text-left bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Key Capabilities</h3>
-                <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Offline map tile caching</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Geo-tagged markdown notes</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Spatial search & radius filtering</div>
-            <div className="flex items-center text-sm text-slate-700"><span className="mr-2 font-bold" style={{color: "#10B981"}}>✓</span> Export GeoJSON & GPX</div>
-              </div>
+        <div className="space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="bg-slate-900 rounded-xl p-4 flex items-center justify-between">
+              <span>{item}</span>
+              <button onClick={() => removeItem(i)} className="text-slate-500 hover:text-red-500">
+                <Trash2 size=16 />
+              </button>
             </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Progressive Web App (PWA) Architecture</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              This application is built with Vite, TypeScript, Tailwind CSS, and Workbox (via vite-plugin-pwa). It is fully optimized for mobile and desktop browsers, featuring offline support, manifest installation, and auto-update service worker lifecycle.
-            </p>
-            <div className="bg-slate-50 p-4 rounded-xl font-mono text-xs text-slate-700 space-y-1">
-              <div>📦 Stack: Vite + React + TypeScript + Tailwind</div>
-              <div>⚡ Service Worker: Workbox (Auto-update enabled)</div>
-              <div>🚀 Repository: github.com/rudra/pwa-offline-maps-notes</div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      <footer className="bg-white border-t border-slate-200 px-6 py-4 text-center text-xs text-slate-400">
-        Portfolio PWA 2026 • Built with automated pipeline
-      </footer>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

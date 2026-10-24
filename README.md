@@ -1,20 +1,26 @@
-# GeoNotes - Offline Maps & Field Notes
+# GeoNotes - Offline Maps & Field Notes PWA
 
-A progressive web app for dropping geo-tagged notes, offline maps via Leaflet/OpenStreetMap caching, and spatial sync.
+🗺️ GeoNotes - Offline-first map-taking app with Geolocation and IndexedDB persistence.
 
 ## Features
-- Offline map tile caching
-- Geo-tagged markdown notes
-- Spatial search & radius filtering
-- Export GeoJSON & GPX
+- Offline tile caching
+- Geo-tagged notes
+- Radius search
+- Export GeoJSON
 
 ## Tech Stack
-- **Vite** & **React 18** with TypeScript
-- **Tailwind CSS** for responsive mobile-first styling
-- **Workbox / Vite PWA Plugin** for offline caching & service worker lifecycle
+- Vite + React + TypeScript
+- Tailwind CSS
+- VitePWA/Workbox
+- Local Storage
 
-## Development
+## Dev
 ```bash
 npm install
 npm run dev
 ```
+
+## PWA
+Install as a native app on mobile/desktop.
+
+**Theme Color:** #10B981
