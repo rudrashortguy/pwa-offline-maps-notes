@@ -1,81 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { Plus, Trash2, Wifi, WifiOff } from 'lucide-react'
+
+const STORAGE_KEY = 'pwa_01-offline-maps-notes_items';
 
 export default function App() {
-  const [items, setItems] = useState<string[]>(['Welcome to GeoNotes', 'Add your first item below', 'Works offline!']);
+  const [items, setItems] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : ['GeoNotes', 'Tap below to add new entries', 'Everything is stored locally and works offline'];
+    } catch {
+      return ['GeoNotes'];
+    }
+  });
   const [input, setInput] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const saved = localStorage.getItem('pwa_01-offline-maps-notes_items');
-    if (saved) {
-      try {
-        setItems(JSON.parse(saved));
-      } catch {}
-    }
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    const up = () => setIsOnline(true);
+    const down = () => setIsOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
     };
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('pwa_01-offline-maps-notes_items', JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = () => {
-    if (input.trim()) {
-      setItems([...items, input.trim()]);
-      setInput('');
-    }
+  const addItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setItems([input.trim(), ...items]);
+    setInput('');
   };
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
-  };
+  const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center p-6">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">GeoNotes</h1>
-          <div className="flex items-center gap-1 text-sm">
-            {isOnline ? <Wifi size=16 className="text-green-500" /> : <WifiOff size=16 className="text-red-500" />}
-            <span className="text-slate-400">{isOnline ? 'Online' : 'Offline'}</span>
-          </div>
+    <div className="container">
+      <header>
+        <div>
+          <h1>GeoNotes</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            Offline-first map-taking app with Geolocation and IndexedDB persistence.
+          </p>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <span className="badge">🗺️ GeoNotes</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: isOnline ? '#4ade80' : '#f87171' }}>
+            {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
+            {isOnline ? 'Online' : 'Offline Mode'}
+          </span>
+        </div>
+      </header>
 
-        <div className="bg-slate-900 rounded-2xl p-4 mb-4">
-          <div className="flex gap-2">
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addItem()}
-              placeholder="Add new item..."
-              className="flex-1 bg-slate-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-10B981"
-            />
-            <button onClick={addItem} className="bg-10B981 hover:opacity-80 p-3 rounded-xl transition">
-              <Plus />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          {items.map((item, i) => (
-            <div key={i} className="bg-slate-900 rounded-xl p-4 flex items-center justify-between">
-              <span>{item}</span>
-              <button onClick={() => removeItem(i)} className="text-slate-500 hover:text-red-500">
-                <Trash2 size=16 />
-              </button>
-            </div>
-          ))}
-        </div>
+      <div className="card">
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Interactive Workspace</h3>
+        <form onSubmit={addItem} style={{ display: 'flex', gap: '0.5rem' }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Add new entry..."
+            style={{ marginBottom: 0, flex: 1 }}
+          />
+          <button type="submit"><Plus size={16} /> Add</button>
+        </form>
       </div>
+
+      <div className="card" style={{ flex: 1 }}>
+        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Stored Entries ({items.length})</h3>
+        {items.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
+            No items yet. Add one above!
+          </p>
+        ) : (
+          <ul>
+            {items.map((item, idx) => (
+              <li key={idx}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                  {item}
+                </span>
+                <button
+                  onClick={() => removeItem(idx)}
+                  style={{ background: 'transparent', color: '#f87171', padding: '0.25rem 0.5rem' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <footer>
+        <p>GeoNotes &bull; Built with Vite, TypeScript &amp; Workbox PWA</p>
+      </footer>
     </div>
   );
 }
